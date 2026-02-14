@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMA Delhi North Zone 2026 - Registration</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #219150; }
+        .price-box { background: #e8f6f3; padding: 15px; border-left: 5px solid #27ae60; margin-bottom: 20px; }
+        .hidden { display: none; }
+        #payment-section { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>IMA DNZ 2026 Registration</h2>
+    
+    <div id="loading">Checking registration slots...</div>
+
+    <div id="registration-form" class="hidden">
+        <div class="price-box" id="price-display">
+            </div>
+
+        <form id="ima-form">
+            <div class="form-group">
+                <label>Doctor Name</label>
+                <input type="text" name="Name" required placeholder="Dr. First Last">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" name="Phone" required placeholder="9876543210">
+            </div>
+            <div class="form-group">
+                <label>IMA DNZ Reg Number</label>
+                <input type="text" name="IMA No" required placeholder="e.g. DNZ-1234">
+            </div>
+
+            <div id="payment-section" class="hidden">
+                <h3>Payment Required</h3>
+                <p>Please pay <strong>₹<span id="pay-amount"></span></strong> via UPI.</p>
+                <p style="text-align:center; color:#555;">UPI ID: <strong>ima.dnz@upi</strong> (Example)</p>
+                
+                <div class="form-group">
+                    <label>Transaction ID / UTR</label>
+                    <input type="text" name="Payment Ref" placeholder="Enter UPI Ref No.">
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn">Register Now</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // PASTE YOUR URL HERE
+    const form = document.forms['ima-form'];
+    const priceDisplay = document.getElementById('price-display');
+    const paymentSection = document.getElementById('payment-section');
+
+    // 1. Check current count on load
+    fetch(scriptURL)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('registration-form').classList.remove('hidden');
+            
+            let count = data.count;
+            let fee = 0;
+            let message = "";
+
+            if (count < 100) {
+                message = `<strong>Slot ${count + 1}: Free Registration!</strong> (First 100)`;
+                fee = 0;
+            } else if (count < 200) {
+                message = `<strong>Slot ${count + 1}: Fee is ₹700</strong> (Slots 101-200)`;
+                fee = 700;
+            } else {
+                message = `<strong>Slot ${count + 1}: Fee is ₹1000</strong> (Slots 200+)`;
+                fee = 1000;
+            }
+
+            priceDisplay.innerHTML = message;
+
+            if (fee > 0) {
+                paymentSection.classList.remove('hidden');
+                document.getElementById('pay-amount').innerText = fee;
+                document.querySelector('input[name="Payment Ref"]').required = true;
+            }
+        })
+        .catch(error => console.error('Error!', error.message));
+
+    // 2. Handle Form Submit
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerText = "Registering...";
+
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            .then(response => response.json())
+            .then(response => {
+                alert("Registration Successful!");
+                form.reset();
+                window.location.reload();
+            })
+            .catch(error => {
+                alert("Error! Please try again.");
+                btn.disabled = false;
+            });
+    });
+</script>
+
+</body>
+</html>
